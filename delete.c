@@ -174,7 +174,6 @@ int main(int argc, char **argv){
     printf("Emptying ~/.trash, are you sure? (Y/N)\n");
     char prompt=getchar();
     if(prompt == 'Y' || prompt == 'y'){
-      printf("shit\n");
 
       rmDirContents("/home/royce/.trash/");
       printf("Complete.\n");
