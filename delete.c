@@ -20,12 +20,12 @@ char *separateString(char *input){//extracts file name from the absolute path gi
     return input;
   }
     
-  char *input2 = (char *) malloc((length+2) * sizeof(char));
+  char *input2 = malloc((length+2) * sizeof(*input2));
 
   //copy input to another string because strtok destroys the original string
   strcpy(input2,input);
 
-  char *separatedString = (char *) malloc((length) * sizeof(char));
+  char *separatedString = malloc((length) * sizeof(*separatedString));
 
   input2[length+1] = 0;
 
@@ -81,7 +81,7 @@ int rmDirContents(char *directory){
 
   while((d = readdir(dir)) != NULL){
     if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))){
-      char *filePath = (char *) malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(char));
+      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(*filePath));
       strcpy(filePath, directory);
       strcat(filePath, "/");
       strcat(filePath, d->d_name);
@@ -125,14 +125,14 @@ int moveDirContents(char *directory, char *target){
 	}
 
 	else{
-	  char *filePath = (char *) malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(char));
+	  char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(*filePath));
 	  strcpy(filePath, directory);
 	  strcat(filePath, "/");
 	  strcat(filePath, d->d_name);
 
 	  type = checkType(filePath);
 	
-	  char *target2 = (char *) malloc((strlen(target)+strlen(d->d_name)+3) * sizeof(char));
+	  char *target2 = malloc((strlen(target)+strlen(d->d_name)+3) * sizeof(*target2));
 	  strcpy(target2, target);
 	  strcat(target2, "/");
 	  strcat(target2, d->d_name);
@@ -186,7 +186,7 @@ int main(int argc, char **argv){
   }
 
   for(int i = 1; argv[i]; i++){
-    char *targetPath = (char *) malloc((strlen("/home/royce/.trash/")+strlen(argv[i])+2)*sizeof(char));
+    char *targetPath = malloc((strlen("/home/royce/.trash/")+strlen(argv[i])+2)*sizeof(targetPath));
     char *fileName = separateString(argv[i]);
 
     strcpy(targetPath, "/home/royce/.trash/");
