@@ -6,26 +6,31 @@
 #include <unistd.h>
 #include <dirent.h>
 
-char *separateString(char *input){//extracts file name from the absolute path given in file
-  char *tok, *token = "/";
+char *separateString(char *input, char delimiter){//extracts file name from the absolute path given in file
+  char *tok, token[2];
+  token[0] = delimiter;
+  token[1] = '\0';
 
   int i = 0, length = 0, tokenCount = 0;
 
   for(length = 0; input[length]; length++){
-    if(input[length] == '/'){
+    if(input[length] == token[0]){
       tokenCount++;
     }
   }
+
+  char *separatedString = malloc((length) * sizeof(separatedString));
   if(tokenCount == 0){
-    return input;
+    strcpy(separatedString, input);
+    return separatedString;
   }
     
-  char *input2 = malloc((length+2) * sizeof(*input2));
+  char *input2 = malloc((length+2) * sizeof(input2));
 
   //copy input to another string because strtok destroys the original string
   strcpy(input2,input);
 
-  char *separatedString = malloc((length) * sizeof(*separatedString));
+
 
   input2[length+1] = 0;
 
@@ -125,14 +130,14 @@ int moveDirContents(char *directory, char *target){
 	}
 
 	else{
-	  char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(*filePath));
+	  char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(filePath));
 	  strcpy(filePath, directory);
 	  strcat(filePath, "/");
 	  strcat(filePath, d->d_name);
 
 	  type = checkType(filePath);
 	
-	  char *target2 = malloc((strlen(target)+strlen(d->d_name)+3) * sizeof(*target2));
+	  char *target2 = malloc((strlen(target)+strlen(d->d_name)+3) * sizeof(target2));
 	  strcpy(target2, target);
 	  strcat(target2, "/");
 	  strcat(target2, d->d_name);
@@ -187,7 +192,7 @@ int main(int argc, char **argv){
 
   for(int i = 1; argv[i]; i++){
     char *targetPath = malloc((strlen("/home/royce/.trash/")+strlen(argv[i])+2)*sizeof(targetPath));
-    char *fileName = separateString(argv[i]);
+    char *fileName = separateString(argv[i], '/');
 
     strcpy(targetPath, "/home/royce/.trash/");
     strcat(targetPath, fileName);
