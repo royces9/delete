@@ -1,10 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <dirent.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 char *separateString(char *input, char delimiter){//extracts file name from the absolute path given in file
   char *tok, token[2];
@@ -130,14 +133,14 @@ int moveDirContents(char *directory, char *target){
 	}
 
 	else{
-	  char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(filePath));
+	  char *filePath = malloc((strlen(directory) + strlen(d->d_name) + 3) * sizeof(*filePath));
 	  strcpy(filePath, directory);
 	  strcat(filePath, "/");
 	  strcat(filePath, d->d_name);
 
 	  type = checkType(filePath);
 	
-	  char *target2 = malloc((strlen(target)+strlen(d->d_name)+3) * sizeof(target2));
+	  char *target2 = malloc((strlen(target) + strlen(d->d_name) + 3) * sizeof(*target2));
 	  strcpy(target2, target);
 	  strcat(target2, "/");
 	  strcat(target2, d->d_name);
@@ -173,14 +176,25 @@ int main(int argc, char **argv){
   int error, n, type;
   char *fileName;
 
+  char *homedir;
+
+  if ((homedir = getenv("HOME")) == NULL) {
+    homedir = getpwuid(getuid())->pw_dir;
+  }
+    
+  int lengthTrashdir = strlen(homedir) + 8;
+  
+  char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
+  strcpy(trashdir, homedir);
+  strcat(trashdir, "/.trash/");
+
   struct stat st;
 
   if(!strcmp("-empty", argv[1])){
     printf("Emptying ~/.trash, are you sure? (Y/N)\n");
     char prompt=getchar();
     if(prompt == 'Y' || prompt == 'y'){
-
-      rmDirContents("/home/royce/.trash/");
+      rmDirContents(trashdir);
       printf("Complete.\n");
       return 0;
     }
@@ -191,13 +205,13 @@ int main(int argc, char **argv){
   }
 
   for(int i = 1; argv[i]; i++){
-    char *targetPath = malloc((strlen("/home/royce/.trash/")+strlen(argv[i])+2)*sizeof(targetPath));
+    char *targetPath = malloc((strlen(trashdir) + strlen(argv[i]) + 2)*sizeof(targetPath));
     char *fileName = separateString(argv[i], '/');
 
-    strcpy(targetPath, "/home/royce/.trash/");
+    strcpy(targetPath, trashdir);
     strcat(targetPath, fileName);
 
-    type = checkType(fileName);
+    type = checkType(argv[i]);
 
     if(type){
       if(access(argv[i], F_OK) == -1){
@@ -209,13 +223,19 @@ int main(int argc, char **argv){
     }
 
     else{
+      printf("Deleting directory: %s . Are you sure? (Y/N)\n", argv[i]);
+      char prompt = getchar();
+      if(prompt == 'Y' || prompt == 'y');
+      else{
+	printf("Cancelled.\n");
+	return 0;
+      }
       error = mkdir(targetPath, 0755);
 
       if(error == -1){
 	printf("Error copying directory.\n");
 	return -1;
       }
-
 
       if(emptyDirectory(argv[i])){
 	error = rmdir(argv[i]);
