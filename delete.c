@@ -250,7 +250,7 @@ int main(int argc, char **argv){
 	rmdir(argv[i]);
       }
     }
-
+    free(homedir);
     free(targetPath);
   }
   return 0;
