@@ -176,12 +176,12 @@ int main(int argc, char **argv){
   int error, n, type;
   char *fileName;
 
-  char *homedir;
+  char *user = getenv("SUDO_USER");
 
-  if ((homedir = getenv("HOME")) == NULL) {
-    homedir = getpwuid(getuid())->pw_dir;
-  }
-    
+  char *homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
+  strcpy(homedir, "/home/");
+  strcat(homedir, user);
+  
   int lengthTrashdir = strlen(homedir) + 8;
   
   char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
@@ -212,7 +212,7 @@ int main(int argc, char **argv){
     strcat(targetPath, fileName);
 
     type = checkType(argv[i]);
-
+    //printf("%s\n%s\n%s\n", argv[i], targetPath, fileName);
     if(type){
       if(access(argv[i], F_OK) == -1){
 	printf("File does not exist.\n");
