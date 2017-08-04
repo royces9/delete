@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +9,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
-char *separateString(char *input, char delimiter){//extracts file name from the absolute path given in file
+//separates a string by a given delimiter, the final portion is saved and given as output
+//extracts file name from the absolute path given in file
+char *separateString(char *input, char delimiter){
   char *tok, token[2];
   token[0] = delimiter;
   token[1] = '\0';
@@ -52,12 +54,14 @@ char *separateString(char *input, char delimiter){//extracts file name from the 
   return separatedString;
 }
 
+//checks the object type, returns 1 if it's a file, 0 otherwise
 int checkType(char *path){
   struct stat pathType;
   stat(path, &pathType);
   return S_ISREG(pathType.st_mode);
 }
 
+//checks if the directory is empty
 int emptyDirectory(char *directory){
   int count = 0;
   struct dirent *d;
@@ -82,6 +86,7 @@ int emptyDirectory(char *directory){
   }  
 }
 
+//rm's everything in directory
 int rmDirContents(char *directory){
   struct dirent *d;
   DIR *dir = opendir(directory);
@@ -113,6 +118,7 @@ int rmDirContents(char *directory){
   return 0;
 }
 
+//moves the contents of directory to target
 int moveDirContents(char *directory, char *target){
   struct dirent *d;
   int type, error;
@@ -168,22 +174,42 @@ int moveDirContents(char *directory, char *target){
   return 1;
 }
 
+char *checkExistence(char *input){
+  int check = 1;
+  char *buffer;
+  char *input2 = malloc((strlen(input) + 1) * sizeof(*input2));
+  strcpy(input2, input);
+
+  if(access(input, F_OK) != -1){
+    input = calloc(*input, (strlen(input) + 1) * sizeof(*input));
+    strcpy(input, input2);
+    strcat(input, "_");
+    input = checkExistence(input);
+  }
+  return input;
+}
+
 int main(int argc, char **argv){
   if(argc == 1){
     return 0;
   }
 
   int error, n, type;
-  char *fileName;
+  char *fileName, *homedir;
 
   char *user = getenv("SUDO_USER");
+  if(user == NULL){
+    homedir = getenv("HOME");
+  }
 
-  char *homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
-  strcpy(homedir, "/home/");
-  strcat(homedir, user);
+  else{
+    homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
+    strcpy(homedir, "/home/");
+    strcat(homedir, user);
+  }
   
   int lengthTrashdir = strlen(homedir) + 8;
-  
+
   char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
   strcpy(trashdir, homedir);
   strcat(trashdir, "/.trash/");
@@ -205,7 +231,7 @@ int main(int argc, char **argv){
   }
 
   for(int i = 1; argv[i]; i++){
-    char *targetPath = malloc((strlen(trashdir) + strlen(argv[i]) + 2)*sizeof(targetPath));
+    char *targetPath = malloc((strlen(trashdir) + strlen(argv[i]) + 2) * sizeof(targetPath));
     char *fileName = separateString(argv[i], '/');
 
     strcpy(targetPath, trashdir);
@@ -213,17 +239,23 @@ int main(int argc, char **argv){
 
     type = checkType(argv[i]);
     //printf("%s\n%s\n%s\n", argv[i], targetPath, fileName);
+
+    targetPath = checkExistence(targetPath);
+
     if(type){
       if(access(argv[i], F_OK) == -1){
 	printf("File does not exist.\n");
 	return -1;
       }
-
       rename(argv[i], targetPath);
     }
 
     else{
-      printf("Deleting directory: %s . Are you sure? (Y/N)\n", argv[i]);
+      if(access(argv[i], F_OK) == -1){
+	printf("File does not exist.\n");
+	return -1;
+      }
+      printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
       char prompt = getchar();
       if(prompt == 'Y' || prompt == 'y');
       else{
@@ -250,7 +282,6 @@ int main(int argc, char **argv){
 	rmdir(argv[i]);
       }
     }
-    free(homedir);
     free(targetPath);
   }
   return 0;
