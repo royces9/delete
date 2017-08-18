@@ -198,10 +198,10 @@ int main(int argc, char **argv){
   char *fileName, *homedir;
 
   char *user = getenv("SUDO_USER");
+
   if(user == NULL){
     homedir = getenv("HOME");
   }
-
   else{
     homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
     strcpy(homedir, "/home/");
@@ -238,7 +238,7 @@ int main(int argc, char **argv){
     strcat(targetPath, fileName);
 
     type = checkType(argv[i]);
-    //printf("%s\n%s\n%s\n", argv[i], targetPath, fileName);
+    //    printf("%s\n%s\n%s\n", argv[i], targetPath, fileName);
 
     targetPath = checkExistence(targetPath);
 
@@ -247,16 +247,21 @@ int main(int argc, char **argv){
 	printf("File does not exist.\n");
 	return -1;
       }
-      rename(argv[i], targetPath);
-    }
+      error = rename(argv[i], targetPath);
 
+      if(error){
+	printf("Error moving file to %s.\n", targetPath);
+      }
+    }
     else{
       if(access(argv[i], F_OK) == -1){
 	printf("File does not exist.\n");
 	return -1;
       }
+
       printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
       char prompt = getchar();
+
       if(prompt == 'Y' || prompt == 'y');
       else{
 	printf("Cancelled.\n");
@@ -276,7 +281,6 @@ int main(int argc, char **argv){
 	  printf("Error removing directory.\n");
 	}
       }
-
       else{
 	moveDirContents(argv[i], targetPath);
 	rmdir(argv[i]);
