@@ -261,8 +261,9 @@ int main(int argc, char **argv){
       }
 
       printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
+
       int prompt = getchar();
-      while(getchar() != '\n');
+      getchar();
 
       if(prompt == 'Y' || prompt == 'y');
       else{
