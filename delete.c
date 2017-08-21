@@ -219,6 +219,7 @@ int main(int argc, char **argv){
   if(!strcmp("-empty", argv[1])){
     printf("Emptying ~/.trash, are you sure? (Y/N)\n");
     char prompt=getchar();
+
     if(prompt == 'Y' || prompt == 'y'){
       rmDirContents(trashdir);
       printf("Complete.\n");
@@ -260,7 +261,8 @@ int main(int argc, char **argv){
       }
 
       printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
-      char prompt = getchar();
+      int prompt = getchar();
+      while(getchar() != '\n');
 
       if(prompt == 'Y' || prompt == 'y');
       else{
