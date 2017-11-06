@@ -177,11 +177,16 @@ int moveDirContents(char *directory, char *target){
 char *checkExistence(char *input){
   int check = 1;
   char *buffer;
-  char *input2 = malloc((strlen(input) + 1) * sizeof(*input2));
+  char *input2 = malloc((strlen(input) + 2) * sizeof(*input2));
   strcpy(input2, input);
 
   if(access(input, F_OK) != -1){
-    input = calloc(*input, (strlen(input) + 1) * sizeof(*input));
+    //input = calloc(*input, (strlen(input) + 1) * sizeof(*input));
+    input = realloc(input, (strlen(input) + 1) * sizeof(*input));
+    if(input == NULL){
+      printf("Couldn't rename file.\n");
+      return NULL;
+    }
     strcpy(input, input2);
     strcat(input, "_");
     input = checkExistence(input);
