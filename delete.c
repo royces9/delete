@@ -19,30 +19,25 @@ char *separateString(char *input, char delimiter){
   int i = 0, length = 0, tokenCount = 0;
 
   for(length = 0; input[length]; length++){
-    if(input[length] == token[0]){
-      tokenCount++;
-    }
+    tokenCount += (input[length] == token[0]);
   }
 
-  char *separatedString = malloc((length) * sizeof(separatedString));
   if(tokenCount == 0){
-    strcpy(separatedString, input);
-    return separatedString;
+    return input;
   }
-    
+
+  char *separatedString = malloc((length) * sizeof(separatedString));    
   char *input2 = malloc((length+2) * sizeof(input2));
 
   //copy input to another string because strtok destroys the original string
   strcpy(input2,input);
-
-
 
   input2[length+1] = 0;
 
   tok = strtok(input2, token);
   ++tok;
 
-  for(i = 0; tok != NULL; i++){
+  for(i = 0; tok != NULL; ++i){
     strcpy(separatedString, tok);
     tok = strtok(NULL, token);
   }
@@ -77,13 +72,9 @@ int emptyDirectory(char *directory){
   }
   
   closedir(dir);
-  
-  if (count <= 2){
-    return 1; //returns 1 if directory is empty
-  }
-  else{
-    return 0;
-  }  
+
+  //returns 1 if directory is empty  
+  return (count <=2);
 }
 
 //rm's everything in directory
@@ -94,7 +85,7 @@ int rmDirContents(char *directory){
 
   while((d = readdir(dir)) != NULL){
     if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))){
-      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+3) * sizeof(*filePath));
+      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+5) * sizeof(*filePath));
       strcpy(filePath, directory);
       strcat(filePath, "/");
       strcat(filePath, d->d_name);
@@ -113,8 +104,10 @@ int rmDirContents(char *directory){
 	rmDirContents(filePath);
 	rmdir(filePath);
       }
+      free(filePath);
     }
   }
+  free(dir);
   return 0;
 }
 
@@ -175,22 +168,17 @@ int moveDirContents(char *directory, char *target){
 }
 
 char *checkExistence(char *input){
-  int check = 1;
-  char *buffer;
-  char *input2 = malloc((strlen(input) + 2) * sizeof(*input2));
-  strcpy(input2, input);
-
+  int size = strlen(input) + 1;
   if(access(input, F_OK) != -1){
-    //input = calloc(*input, (strlen(input) + 1) * sizeof(*input));
-    input = realloc(input, (strlen(input) + 1) * sizeof(*input));
+    input = realloc(input, (size+1) * sizeof(*input));
     if(input == NULL){
       printf("Couldn't rename file.\n");
       return NULL;
     }
-    strcpy(input, input2);
     strcat(input, "_");
     input = checkExistence(input);
   }
+
   return input;
 }
 
@@ -213,7 +201,7 @@ int main(int argc, char **argv){
     strcat(homedir, user);
   }
   
-  int lengthTrashdir = strlen(homedir) + 8;
+  int lengthTrashdir = strlen(homedir) + 9;
 
   char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
   strcpy(trashdir, homedir);
@@ -228,10 +216,14 @@ int main(int argc, char **argv){
     if(prompt == 'Y' || prompt == 'y'){
       rmDirContents(trashdir);
       printf("Complete.\n");
+      free(trashdir);
+      free(homedir);
       return 0;
     }
     else{
       printf("Cancelled.\n");
+      free(trashdir);
+      free(homedir);
       return 1;
     }
   }
@@ -244,7 +236,6 @@ int main(int argc, char **argv){
     strcat(targetPath, fileName);
 
     type = checkType(argv[i]);
-    //    printf("%s\n%s\n%s\n", argv[i], targetPath, fileName);
 
     targetPath = checkExistence(targetPath);
 
@@ -296,5 +287,6 @@ int main(int argc, char **argv){
     }
     free(targetPath);
   }
+  free(trashdir);
   return 0;
 }
