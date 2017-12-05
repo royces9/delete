@@ -49,11 +49,12 @@ char *separateString(char *input, char delimiter){
   return separatedString;
 }
 
-//checks the object type, returns 1 if it's a file, 0 otherwise
+//checks the object type, returns 0 if directory, 1 otherwise
 int checkType(char *path){
   struct stat pathType;
   stat(path, &pathType);
-  return S_ISREG(pathType.st_mode);
+  if(S_ISDIR(pathType.st_mode)) return 0;
+  return 1;
 }
 
 //checks if the directory is empty
@@ -81,21 +82,20 @@ int emptyDirectory(char *directory){
 int rmDirContents(char *directory){
   struct dirent *d;
   DIR *dir = opendir(directory);
-  int error, type;
+  int error = 0, type = 0;
 
   while((d = readdir(dir)) != NULL){
     if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))){
-      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+5) * sizeof(*filePath));
+      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+2) * sizeof(*filePath));
       strcpy(filePath, directory);
       strcat(filePath, "/");
       strcat(filePath, d->d_name);
 
-      type = checkType(filePath);
-
-      if(type){
+      if(checkType(filePath)){
 	error = unlink(filePath);
 	if(error == -1){
 	  printf("Error deleting.\n");
+	  free(filePath);
 	  return -1;
 	}
       }
@@ -107,7 +107,7 @@ int rmDirContents(char *directory){
       free(filePath);
     }
   }
-  free(dir);
+  closedir(dir);
   return 0;
 }
 
@@ -148,6 +148,9 @@ int moveDirContents(char *directory, char *target){
 	    error = rename(filePath, target2);
 	    if(error == -1){
 	      printf("Error removing.\n");
+	      closedir(dir);
+	      free(target2);
+	      free(filePath);
 	      return -1;
 	    }
 	  }
@@ -164,6 +167,7 @@ int moveDirContents(char *directory, char *target){
       }
     }
   }
+  closedir(dir);
   return 1;
 }
 
@@ -188,12 +192,13 @@ int main(int argc, char **argv){
   }
 
   int error, n, type;
+  char *user = getenv("SUDO_USER");
   char *fileName, *homedir;
 
-  char *user = getenv("SUDO_USER");
-
   if(user == NULL){
-    homedir = getenv("HOME");
+    char *temp = getenv("HOME");
+    homedir = malloc((strlen(temp) + 7) * sizeof(*homedir));
+    strcpy(homedir, temp);
   }
   else{
     homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
@@ -205,7 +210,7 @@ int main(int argc, char **argv){
 
   char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
   strcpy(trashdir, homedir);
-  strcat(trashdir, "/.trash/");
+  strcat(trashdir, "/.trash");
 
   struct stat st;
 
@@ -216,16 +221,13 @@ int main(int argc, char **argv){
     if(prompt == 'Y' || prompt == 'y'){
       rmDirContents(trashdir);
       printf("Complete.\n");
-      free(trashdir);
-      free(homedir);
-      return 0;
     }
     else{
       printf("Cancelled.\n");
-      free(trashdir);
-      free(homedir);
-      return 1;
     }
+    free(trashdir);
+    free(homedir);
+    return 0;
   }
 
   for(int i = 1; argv[i]; i++){
@@ -233,6 +235,7 @@ int main(int argc, char **argv){
     char *fileName = separateString(argv[i], '/');
 
     strcpy(targetPath, trashdir);
+    strcat(targetPath, "/");
     strcat(targetPath, fileName);
 
     type = checkType(argv[i]);
@@ -242,6 +245,8 @@ int main(int argc, char **argv){
     if(type){
       if(access(argv[i], F_OK) == -1){
 	printf("File does not exist.\n");
+	free(targetPath);
+	free(fileName);
 	return -1;
       }
       error = rename(argv[i], targetPath);
@@ -253,6 +258,8 @@ int main(int argc, char **argv){
     else{
       if(access(argv[i], F_OK) == -1){
 	printf("File does not exist.\n");
+	free(targetPath);
+	free(fileName);
 	return -1;
       }
 
@@ -264,12 +271,16 @@ int main(int argc, char **argv){
       if(prompt == 'Y' || prompt == 'y');
       else{
 	printf("Cancelled.\n");
+	free(targetPath);
+	free(fileName);
 	return 0;
       }
       error = mkdir(targetPath, 0755);
 
       if(error == -1){
 	printf("Error copying directory.\n");
+	free(targetPath);
+	free(fileName);
 	return -1;
       }
 
@@ -286,7 +297,9 @@ int main(int argc, char **argv){
       }
     }
     free(targetPath);
+    free(fileName);
   }
+  free(homedir);
   free(trashdir);
   return 0;
 }
