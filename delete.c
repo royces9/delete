@@ -297,7 +297,6 @@ int main(int argc, char **argv){
       }
     }
     free(targetPath);
-    free(fileName);
   }
   free(homedir);
   free(trashdir);
