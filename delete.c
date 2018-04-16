@@ -49,6 +49,15 @@ char *separateString(char *input, char delimiter){
   return separatedString;
 }
 
+char *concatDirectory(char *str1, char *str2){
+  int size = strlen(str1) + strlen(str2) + 2;
+  char *out = malloc(size * sizeof(*out));
+  strcpy(out, str1);
+  strcat(out, "/");
+  strcat(out, str2);
+  return out;
+}
+
 //checks the object type, returns 0 if directory, 1 otherwise
 int checkType(char *path){
   struct stat pathType;
@@ -86,10 +95,7 @@ int rmDirContents(char *directory){
 
   while((d = readdir(dir)) != NULL){
     if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))){
-      char *filePath = malloc((strlen(directory)+strlen(d->d_name)+2) * sizeof(*filePath));
-      strcpy(filePath, directory);
-      strcat(filePath, "/");
-      strcat(filePath, d->d_name);
+      char *filePath = concatDirectory(directory, d->d_name);
 
       if(checkType(filePath)){
 	error = unlink(filePath);
@@ -132,17 +138,10 @@ int moveDirContents(char *directory, char *target){
 	}
 
 	else{
-	  char *filePath = malloc((strlen(directory) + strlen(d->d_name) + 3) * sizeof(*filePath));
-	  strcpy(filePath, directory);
-	  strcat(filePath, "/");
-	  strcat(filePath, d->d_name);
-
+	  char *filePath = concatDirectory(directory, d->d_name);
 	  type = checkType(filePath);
-	
-	  char *target2 = malloc((strlen(target) + strlen(d->d_name) + 3) * sizeof(*target2));
-	  strcpy(target2, target);
-	  strcat(target2, "/");
-	  strcat(target2, d->d_name);
+	  
+	  char *target2 = concatDirectory(target, d->d_name);
 
 	  if(type){
 	    error = rename(filePath, target2);
@@ -266,7 +265,6 @@ int main(int argc, char **argv){
       printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
 
       int prompt = getchar();
-      getchar();
 
       if(prompt == 'Y' || prompt == 'y');
       else{
