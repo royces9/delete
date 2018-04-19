@@ -232,7 +232,7 @@ int main(int argc, char **argv){
   if(!strcmp("-empty", argv[1])) {
     printf("Emptying ~/.trash, are you sure? (Y/N)\n");
     char prompt=getchar();
-
+    
     if(prompt == 'Y' || prompt == 'y'){
       rmDirContents(trashdir);
       printf("Complete.\n");
