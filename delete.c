@@ -261,7 +261,6 @@ int main(int argc, char **argv){
     if(access(argv[i], F_OK) == -1) {
       printf("File does not exist.\n");
       free(targetPath);
-      free(fileName);
       return -1;
     }
 
