@@ -1,13 +1,17 @@
 #include <dirent.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <math.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "delete.h"
+
+int8_t error = 0;
 
 //separates a string by a given delimiter, the final portion is saved and given as output
 //extracts file name from the absolute path given in file
@@ -27,7 +31,16 @@ char *separateString(char *input, char delimiter) {
   }
 
   char *separatedString = malloc((length) * sizeof(separatedString));    
+  if(!separatedString){
+    error = mallocError;
+    return NULL;
+  }
+
   char *input2 = malloc((length+2) * sizeof(input2));
+  if(!input2){
+    error = mallocError;
+    return NULL;
+  }
 
   //copy input to another string because strtok destroys the original string
   strcpy(input2,input);
@@ -55,10 +68,18 @@ char *separateString(char *input, char delimiter) {
 //two strings are generally directories/files
 char *concatDirectory(char *str1, char *str2) {
   int size = strlen(str1) + strlen(str2) + 2;
+
   char *out = malloc(size * sizeof(*out));
+
+  if(!out){
+    error = mallocError;
+    return NULL;
+  }
+
   strcpy(out, str1);
   strcat(out, "/");
   strcat(out, str2);
+
   return out;
 }
 
@@ -66,17 +87,21 @@ char *concatDirectory(char *str1, char *str2) {
 //checks the object type, returns 0 if directory, 1 otherwise
 int checkType(char *path) {
   struct stat pathType;
+
   stat(path, &pathType);
-  if(S_ISDIR(pathType.st_mode)) return 0;
-  return 1;
+
+  return !(S_ISDIR(pathType.st_mode));
 }
 
 
 //checks if the directory is empty
-int emptyDirectory(char *directory) {
-  int count = 0;
+int8_t emptyDirectory(char *directory) {
+  unsigned int count = 0;
+
   struct dirent *d;
+
   DIR *dir = opendir(directory);
+
   if (dir == NULL) {
     return -1;
   }
@@ -97,53 +122,65 @@ int emptyDirectory(char *directory) {
 
 
 //rm's everything in directory
-int rmDirContents(char *directory) {
+int8_t rmDirContents(char *directory) {
   struct dirent *d;
   DIR *dir = opendir(directory);
-  int error = 0;
 
   while((d = readdir(dir)) != NULL) {
     if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
       char *filePath = concatDirectory(directory, d->d_name);
 
       if(checkType(filePath)) {
-	error = unlink(filePath);
-	if(error == -1){
-	  printf("Error deleting.\n");
+	if(unlink(filePath) == -1){
+	  error = deleteFileError;
 	  closedir(dir);
 	  free(filePath);
-	  return -1;
+	  break;
 	}
+
       } else {
 	rmDirContents(filePath);
 	rmdir(filePath);
       }
+
       free(filePath);
     }
   }
+
   closedir(dir);
-  return 0;
+  return error;
 }
 
+
 //moves the contents of directory to target
-int moveDirContents(char *directory, char *target) {
+int8_t moveDirContents(char *directory, char *target) {
   struct dirent *d;
-  int type, error;
+  int type = 0;
 
   DIR *dir = opendir(directory);
 
   //for every object in the directory
   while((d = readdir(dir)) != NULL) {
+
     if(access(directory, F_OK) == -1) {
-      printf("Directory does not exist.\n");
+      error = directoryExist;
       closedir(dir);
-      return -1;
+      break;
+
     } else {
       if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
-	if(emptyDirectory(directory)) { //makes empty directory
+
+	int8_t emptyDir = emptyDirectory(directory);
+	if(emptyDir == -1){
+	  error = directoryExist;
+	  break;
+
+	} else if(emptyDir) { //makes empty directory
 	  mkdir(target, 0755);
 	  rmdir(directory);
+
 	} else { 
+
 	  char *filePath = concatDirectory(directory, d->d_name);
 	  type = checkType(filePath);
 	  
@@ -151,13 +188,13 @@ int moveDirContents(char *directory, char *target) {
 
 	  //check if the object is a file or directory
 	  if(type) { //file, move the file from filePath to target2
-	    error = rename(filePath, target2);
-	    if(error == -1) {
-	      printf("Error removing.\n");
+	    if(rename(filePath, target2) == -1){
+	      error = removeFileError;
 	      closedir(dir);
 	      free(target2);
 	      free(filePath);
-	      return -1;
+
+	      break;
 	    }
 	  } else { //directory, make a new directory, and move all the contents
 	    //in the directory, and then remove the old directory
@@ -172,25 +209,85 @@ int moveDirContents(char *directory, char *target) {
       }
     }
   }
+
   closedir(dir);
-  return 1;
+  return error;
 }
+
+
+char *getHome(void){
+  //if sudo is used, check the user calling sudo
+  char *user = getenv("SUDO_USER");
+
+  //directory for home
+  char *homeDirectory;
+
+  //NULL if sudo was NOT used, just get home variable
+  if(user == NULL){ 
+    char *homeEnv = getenv("HOME");
+    homeDirectory = malloc((strlen(homeEnv) + 7) * sizeof(*homeDirectory));
+
+    if(!homeDirectory){
+      error = mallocError;
+      return NULL;
+    }
+
+    strcpy(homeDirectory, homeEnv);
+
+  } else{ //otherwise concatenate "/home/" and user
+    homeDirectory = malloc((strlen(user) + 7) * sizeof(*homeDirectory));
+
+    if(!homeDirectory){
+      error = mallocError;
+      return NULL;
+    }
+
+    strcpy(homeDirectory, "/home/");
+    strcat(homeDirectory, user);
+  }
+
+  return homeDirectory;
+}
+
 
 //check that a given file exists
 //used to check if duplicates are in .trash
 char *checkExistence(char *input){
-  int size = strlen(input) + 1;
+  unsigned int size = strlen(input) + 1;
+
   if(access(input, F_OK) != -1){
     input = realloc(input, (size+1) * sizeof(*input));
-    if(input == NULL){
-      printf("Couldn't rename file.\n");
+
+    if(!input){
+      error = mallocError;
       return NULL;
     }
+
     strcat(input, "_");
+    //also checks that the renamed file
+    //exists in trash
     input = checkExistence(input);
+
+    if(!input) return NULL;
   }
 
   return input;
+}
+
+
+void error_handling(void){
+  if(error < 0){
+    printf("Error:\n");
+    switch(error){
+    case -1: printf("Could not delete file."); break;
+    case -2: printf("Could not rename file."); break;
+    case -3: printf("Directory does not exist."); break;
+    case -4: printf("File does not exist."); break;
+    case -5: printf("Malloc failure."); break;
+    }
+
+    printf("\n");
+  }
 }
 
 
@@ -199,101 +296,68 @@ int main(int argc, char **argv){
     return 0;
   }
 
-  int error, n, type;
-
-  //if sudo is used, check the user calling sudo
-  char *user = getenv("SUDO_USER");
+  int type = 0;
 
   //directory for home
-  char *homedir;
-
-  //NULL if sudo was NOT used, just get home variable
-  if(user == NULL){ 
-    char *temp = getenv("HOME");
-    homedir = malloc((strlen(temp) + 7) * sizeof(*homedir));
-    strcpy(homedir, temp);
-  } else{ //otherwise concatenate "/home/" and user
-    homedir = malloc((strlen(user) + 7) * sizeof(*homedir));
-    strcpy(homedir, "/home/");
-    strcat(homedir, user);
-  }
+  char *homeDirectory = getHome();
+  if(error) goto errorGoTo;
   
   //hardcoded directory for trash is ~/.trash
-  int lengthTrashdir = strlen(homedir) + 9;
-
-  char *trashdir = malloc(lengthTrashdir * sizeof(*trashdir));
-  strcpy(trashdir, homedir);
-  strcat(trashdir, "/.trash");
+  char *trashDirectory = concatDirectory(homeDirectory, ".trash");
+  if(error) goto errorGoTo;
 
   //struct for file information
   struct stat st;
 
   //if there is an argument to empty trash
   if(!strcmp("-empty", argv[1])) {
-    printf("Emptying ~/.trash, are you sure? (Y/N)\n");
-    char prompt=getchar();
-    
-    if(prompt == 'Y' || prompt == 'y'){
-      rmDirContents(trashdir);
-      printf("Complete.\n");
-    } else{
-      printf("Cancelled.\n");
-    }
-    free(trashdir);
-    free(homedir);
+    rmDirContents(trashDirectory);
+    printf("Complete.\n");
+
+    free(trashDirectory);
+    free(homeDirectory);
     return 0;
   }
 
   //loop through all given arguments
   //should be names of files/directories
-  for(int i = 1; argv[i]; i++) {
-    char *targetPath = malloc((strlen(trashdir) + strlen(argv[i]) + 2) * sizeof(targetPath));
-    char *fileName = separateString(argv[i], '/');
+  for(int i = 1; argv[i] && !error; i++) {
 
-    strcpy(targetPath, trashdir);
-    strcat(targetPath, "/");
-    strcat(targetPath, fileName);
+    if(access(argv[i], F_OK) == -1) {
+      error = fileExist;
+      break; 
+    }
+
+    //fileName: the name of just the file that is going to be deleted
+    char *fileName = separateString(argv[i], '/');
+    if(error) break;
+
+    //targetPath: the path to the file in the trash directory
+    char *targetPath = concatDirectory(trashDirectory, fileName);
+    if(error) break;
+  
+    //check if file exists in .trash
+    //if it does, change the name
+    targetPath = checkExistence(targetPath);
+    if(error) break;
 
     //check object type
     type = checkType(argv[i]);
 
-    //check that file given as an argument exists
-    if(access(argv[i], F_OK) == -1) {
-      printf("File does not exist.\n");
-      free(targetPath);
-      return -1;
-    }
-
-    //check if file exists in .trash
-    //if it does, change the name
-    targetPath = checkExistence(targetPath);
-
     if(type) { //file
-      error = rename(argv[i], targetPath);
-      if(error) {
-	printf("Error moving file to %s.\n", targetPath);
+      //move file from current location
+      //to new location in trash
+      if(rename(argv[i], targetPath)){
+	  error = deleteFileError;
+	  break;
       }
+
     } else { //directory
-      //prompt to delete directory
-      printf("Deleting directory: %s \nAre you sure? (Y/N)\n", argv[i]);
-      int prompt = getchar();
-
-      //check that prompt is 'Y' or 'y', anything else will cancel
-      if((prompt == 'Y') == ((prompt == 'y'))) {
-	printf("Cancelled.\n");
-	free(targetPath);
-	free(fileName);
-	return 0;
-      }
-
       //make directory in .trash
-      error = mkdir(targetPath, 0755);
-
-      if(error == -1) {
-	printf("Error copying directory.\n");
+      if(mkdir(targetPath, 0755) == -1){
+	error = makeDirectoryError;
 	free(targetPath);
-	free(fileName);
-	return -1;
+	break;
       }
 
       //if the directory given is empty
@@ -301,11 +365,11 @@ int main(int argc, char **argv){
       //otherwise, move the contents in the directory
       //to the new path, and then delete those
       if(emptyDirectory(argv[i])) {
-	error = rmdir(argv[i]);
-	
-	if(error == -1){
-	  printf("Error removing directory.\n");
+	if(rmdir(argv[i]) == -1){
+	  error = removeDirError;
+	  break;
 	}
+
       } else{
 	moveDirContents(argv[i], targetPath);
 	rmdir(argv[i]);
@@ -313,7 +377,9 @@ int main(int argc, char **argv){
     }
     free(targetPath);
   }
-  free(homedir);
-  free(trashdir);
+
+ errorGoTo:
+  error_handling();
   return 0;
+
 }
