@@ -306,8 +306,6 @@ int main(int argc, char **argv){
   char *trashDirectory = concatDirectory(homeDirectory, ".trash");
   if(error) goto errorGoTo;
 
-  //struct for file information
-  struct stat st;
 
   //if there is an argument to empty trash
   if(!strcmp("-empty", argv[1])) {
