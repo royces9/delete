@@ -16,19 +16,21 @@ int8_t error = 0;
 //separates a string by a given delimiter, the final portion is saved and given as output
 //extracts file name from the absolute path given in file
 char *separateString(char *input, char delimiter) {
-  char *tok, token[2];
+	char *tok;
+	char token[2];
   token[0] = delimiter;
   token[1] = '\0';
 
-  int i = 0, length = 0, tokenCount = 0;
 
-  for(length = 0; input[length]; length++) {
-    tokenCount += (input[length] == token[0]);
+  uint32_t tokenCount = 0;
+  uint32_t length = 0;
+  for(; input[length]; length++) {
+	  if(input[length] == token[0])
+		  ++tokenCount;
   }
 
-  if(tokenCount == 0){
+  if(!tokenCount)
     return input;
-  }
 
   char *separatedString = malloc((length) * sizeof(separatedString));    
   if(!separatedString){
@@ -50,8 +52,9 @@ char *separateString(char *input, char delimiter) {
   tok = strtok(input2, token);
   ++tok;
 
+  int i = 0;
   //we only care about the last bit, so keep rewriting that part until the end
-  for(i = 0; tok != NULL; ++i) {
+  for(; tok != NULL; ++i) {
     strcpy(separatedString, tok);
     tok = strtok(NULL, token);
   }
