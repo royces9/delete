@@ -1,7 +1,7 @@
 CC = gcc
 
 delete: delete.c delete.h
-	gcc -o delete delete.c -lm
+	gcc -Wall -o delete delete.c -lm
 
 usr: delete.c delete.h
 	gcc -o /usr/local/bin/del delete.c
