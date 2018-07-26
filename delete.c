@@ -67,7 +67,7 @@ int8_t emptyDirectory(char *directory) {
 	if(!dir)
 		return -1;
   
-	while ((d = readdir(dir)) != NULL)) {
+	while ( ((d = readdir(dir)) != NULL) ) {
 		if(++count > 2)
 			break;
 	}
