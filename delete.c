@@ -14,7 +14,6 @@
 
 int8_t error = 0;
 
-//separates a string by a given delimiter, the final portion is saved and given as output
 //extracts file name from the absolute path given in file
 char *separateString(char *input, char delimiter) {
 	uint32_t length = strlen(input);
@@ -37,13 +36,12 @@ char *concatDirectory(char *str1, char *str2) {
 
 	if(!out){
 		error = mallocError;
-		return NULL;
+	} else {
+		strcpy(out, str1);
+		strcat(out, "/");
+		strcat(out, str2);
 	}
-
-	strcpy(out, str1);
-	strcat(out, "/");
-	strcat(out, str2);
-
+	
 	return out;
 }
 
@@ -88,18 +86,13 @@ int8_t rmDirContents(char *directory) {
 	struct dirent *d;
 	DIR *dir = opendir(directory);
 
-	while((d = readdir(dir)) != NULL) {
+	while( (!error) && ((d = readdir(dir)) != NULL)) {
 		if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
 			char *filePath = concatDirectory(directory, d->d_name);
 
 			if(checkType(filePath)) {
-				if(unlink(filePath) == -1){
+				if(unlink(filePath) == -1)
 					error = deleteFileError;
-					closedir(dir);
-					free(filePath);
-					break;
-				}
-
 			} else {
 				rmDirContents(filePath);
 				rmdir(filePath);
@@ -203,6 +196,7 @@ char *getHome(void){
 
 //check that a given file exists
 //used to check if duplicates are in .trash
+//returns the new string
 char *checkExistence(char *input){
 	uint32_t size = strlen(input) + 1;
 
@@ -226,10 +220,10 @@ char *checkExistence(char *input){
 }
 
 
-void error_handling(void){
-	if(error < 0){
+void error_handling(void) {
+	if(error < 0) {
 		printf("Error:\n");
-		switch(error){
+		switch(error) {
 		case -1: printf("Could not delete file."); break;
 		case -2: printf("Could not rename file."); break;
 		case -3: printf("Directory does not exist."); break;
@@ -242,10 +236,9 @@ void error_handling(void){
 }
 
 
-int main(int argc, char **argv){
-	if(argc == 1){
+int main(int argc, char **argv) {
+	if(argc == 1)
 		return 0;
-	}
 
 	int type = 0;
 
@@ -261,7 +254,6 @@ int main(int argc, char **argv){
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
 		rmDirContents(trashDirectory);
-		printf("Complete.\n");
 
 		free(trashDirectory);
 		free(homeDirectory);
