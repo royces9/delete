@@ -17,11 +17,13 @@ int8_t error = 0;
 //extracts file name from the absolute path given in file
 char *separateString(char *input, char delimiter) {
 	uint32_t length = strlen(input);
+	uint32_t length2 = length;
 
 	//empty for
-	for(; input[length] == delimiter; --length);
+	for(; input[length2] == delimiter; --length2);
 
-	input += length;
+	if(length != length2)
+		input += (length - length2);
 
 	return input;
 }
@@ -246,9 +248,17 @@ int main(int argc, char **argv) {
 	char *homeDirectory = getHome();
 	if(error) goto errorGoTo;
   
+
+#if DEBUG
+	char *trashDirectory = malloc(sizeof(*trashDirectory) * 7);
+	strcpy(trashDirectory, "trash");
+#else
 	//hardcoded directory for trash is ~/.trash
 	char *trashDirectory = concatDirectory(homeDirectory, ".trash");
 	if(error) goto errorGoTo;
+#endif
+
+
 
 
 	//if there is an argument to empty trash
