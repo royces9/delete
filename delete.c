@@ -19,11 +19,12 @@ char *separateString(char *input, char delimiter) {
 	uint32_t length = strlen(input);
 	uint32_t length2 = length;
 
+
 	//empty for
-	for(; input[length2] != delimiter; --length2);
+	for(; (length2 > 0) && (input[length2] != delimiter); --length2);
 
 	if(length != length2)
-		input += (length - length2);
+		input += length2;
 
 	return input;
 }
@@ -173,7 +174,7 @@ char *getHome(void){
 	//NULL if sudo was NOT used, just get home variable
 	if(!user) { 
 		user = getenv("HOME");
-		homeDirectory = malloc(strlen(user) * sizeof(*homeDirectory));
+		homeDirectory = malloc((strlen(user) + 1) * sizeof(*homeDirectory));
 		if(!homeDirectory) {
 			error = mallocError;
 			return NULL;
