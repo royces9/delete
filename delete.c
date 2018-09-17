@@ -20,7 +20,7 @@ char *separateString(char *input, char delimiter) {
 	uint32_t length2 = length;
 
 	//empty for
-	for(; input[length2] == delimiter; --length2);
+	for(; input[length2] != delimiter; --length2);
 
 	if(length != length2)
 		input += (length - length2);
@@ -257,8 +257,6 @@ int main(int argc, char **argv) {
 	char *trashDirectory = concatDirectory(homeDirectory, ".trash");
 	if(error) goto errorGoTo;
 #endif
-
-
 
 
 	//if there is an argument to empty trash
