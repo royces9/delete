@@ -1,23 +1,18 @@
 #include <dirent.h>
-#include <fcntl.h>
-#include <math.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "delete.h"
 
-int8_t error = 0;
+char error = 0;
 
 //extracts file name from the absolute path given in file
 char *separateString(char *input, char delimiter) {
-	uint32_t length = strlen(input);
-	uint32_t length2 = length;
+	int length = strlen(input);
+	int length2 = length;
 
 
 	//empty for
@@ -33,7 +28,7 @@ char *separateString(char *input, char delimiter) {
 //given two strings, concatenate them and separate them by a '/'
 //two strings are generally directories/files
 char *concatDirectory(char *str1, char *str2) {
-	uint32_t size = strlen(str1) + strlen(str2) + 2;
+	int size = strlen(str1) + strlen(str2) + 2;
 
 	char *out = malloc(size * sizeof(*out));
 
@@ -61,7 +56,7 @@ int checkType(char *path) {
 
 //checks if the directory is empty
 int8_t emptyDirectory(char *directory) {
-	uint32_t count = 0;
+	int count = 0;
 
 	struct dirent *d;
 
@@ -70,7 +65,7 @@ int8_t emptyDirectory(char *directory) {
 	if(!dir)
 		return -1;
   
-	while ( ((d = readdir(dir)) != NULL) ) {
+	while ( (d = readdir(dir)) ) {
 		if(++count > 2)
 			break;
 	}
@@ -118,43 +113,41 @@ int8_t moveDirContents(char *directory, char *target) {
 	DIR *dir = opendir(directory);
 
 	//for every object in the directory
-	while( (!error) && ((d = readdir(dir)) != NULL) ) {
+	while( (!error) && (d = readdir(dir)) ) {
 
 		if(access(directory, F_OK) == -1) {
 			error = directoryExist;
-		} else {
-			if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
+			//} else if( (*(d->d_name) != '.') && (*(d->d_name + 1) != '.') ) {
+		} else if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
+			int8_t emptyDir = emptyDirectory(directory);
+			if(emptyDir == -1){
+				error = directoryExist;
 
-				int8_t emptyDir = emptyDirectory(directory);
-				if(emptyDir == -1){
-					error = directoryExist;
+			} else if(emptyDir) { //makes empty directory
+				mkdir(target, 0755);
+				rmdir(directory);
 
-				} else if(emptyDir) { //makes empty directory
-					mkdir(target, 0755);
-					rmdir(directory);
+			} else { 
 
-				} else { 
-
-					char *filePath = concatDirectory(directory, d->d_name);
-					type = checkType(filePath);
+				char *filePath = concatDirectory(directory, d->d_name);
+				type = checkType(filePath);
 	  
-					char *target2 = concatDirectory(target, d->d_name);
+				char *target2 = concatDirectory(target, d->d_name);
 
-					//check if the object is a file or directory
-					if(type) { //file, move the file from filePath to target2
-						if(rename(filePath, target2) == -1)
-							error = removeFileError;
+				//check if the object is a file or directory
+				if(type) { //file, move the file from filePath to target2
+					if(rename(filePath, target2) == -1)
+						error = removeFileError;
 
-					} else { //directory, make a new directory, and move all the contents
-						//in the directory, and then remove the old directory
-						mkdir(target2, 0755);
-						moveDirContents(filePath, target2);
-						rmdir(filePath);
-					}
-
-					free(target2);
-					free(filePath);
+				} else { //directory, make a new directory, and move all the contents
+					//in the directory, and then remove the old directory
+					mkdir(target2, 0755);
+					moveDirContents(filePath, target2);
+					rmdir(filePath);
 				}
+
+				free(target2);
+				free(filePath);
 			}
 		}
 	}
@@ -201,7 +194,7 @@ char *getHome(void){
 //used to check if duplicates are in .trash
 //returns the new string
 char *checkExistence(char *input){
-	uint32_t size = strlen(input) + 1;
+	int size = strlen(input) + 1;
 
 	if(access(input, F_OK) != -1){
 		input = realloc(input, (size+1) * sizeof(*input));
@@ -225,16 +218,14 @@ char *checkExistence(char *input){
 
 void error_handling(void) {
 	if(error < 0) {
-		printf("Error:\n");
+		puts("Error:");
 		switch(error) {
-		case -1: printf("Could not delete file."); break;
-		case -2: printf("Could not rename file."); break;
-		case -3: printf("Directory does not exist."); break;
-		case -4: printf("File does not exist."); break;
-		case -5: printf("Malloc failure."); break;
+		case -1: puts("Could not delete file."); break;
+		case -2: puts("Could not rename file."); break;
+		case -3: puts("Directory does not exist."); break;
+		case -4: puts("File does not exist."); break;
+		case -5: puts("Malloc failure."); break;
 		}
-
-		printf("\n");
 	}
 }
 
