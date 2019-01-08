@@ -1,7 +1,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
