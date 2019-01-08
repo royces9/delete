@@ -1,10 +1,10 @@
 CC = gcc
 
 delete: delete.c delete.h
-	gcc -Wall -o delete delete.c -lm
+	gcc -DDEBUG -Wall -o delete delete.c
 
-debug: delete.c delete.h
-	gcc -Wall -g -D DEBUG -o delete delete.c -lm
+exp: exp.c exp.h
+	gcc -DDEBUG -Wall -o exp exp.c
 
 usr: delete.c delete.h
 	gcc -o /usr/local/bin/del delete.c
