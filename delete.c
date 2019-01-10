@@ -16,7 +16,6 @@ char *separateString(char *input, char delimiter) {
 	int length = strlen(input);
 	int length2 = length;
 
-
 	//empty for
 	for(; (length2 > 0) && (input[length2] != delimiter); --length2);
 
@@ -242,13 +241,13 @@ int main(int argc, char **argv) {
 	char *homeDirectory = getHome();
 	if(error) goto errorGoTo;
   
-
+char *trashDirectory =
 #if DEBUG
-	char *trashDirectory = malloc(sizeof(*trashDirectory) * 7);
+	malloc(sizeof(*trashDirectory) * 7);
 	strcpy(trashDirectory, "trash");
 #else
 	//hardcoded directory for trash is ~/.trash
-	char *trashDirectory = concatDirectory(homeDirectory, ".trash");
+	concatDirectory(homeDirectory, ".trash");
 	if(error) goto errorGoTo;
 #endif
 
