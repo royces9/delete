@@ -128,7 +128,7 @@ int8_t moveDirContents(char *directory, char *target) {
 				mkdir(target, 0755);
 				rmdir(directory);
 
-			} else { 
+			} else {
 
 				char *filePath = concatDirectory(directory, d->d_name);
 				type = checkType(filePath);
@@ -231,17 +231,46 @@ void error_handling(void) {
 }
 
 
+void move_file(int type, char *src, char *dest) {
+	if(type) { //file
+		//move file from current location
+		//to new location in trash
+		if(rename(src, dest)) 
+			error = deleteFileError;
+
+	} else { //directory
+		//make directory in .trash
+		if(mkdir(dest, 0755) == -1) {
+			error = makeDirectoryError;
+			return;
+		}
+
+		//if the directory given is empty
+		//remove it, and continue on
+		//otherwise, move the contents in the directory
+		//to the new path, and then delete those
+		if(emptyDirectory(src)) {
+			if(rmdir(src) == -1)
+				error = removeDirError;
+
+		} else {
+			moveDirContents(src, dest);
+			rmdir(src);
+		}
+	}
+
+}
+
+
 int main(int argc, char **argv) {
 	if(argc == 1)
 		return 0;
 
-	int type = 0;
-
 	//directory for home
 	char *homeDirectory = getHome();
 	if(error) goto errorGoTo;
-  
-char *trashDirectory =
+
+	char *trashDirectory =
 #if DEBUG
 	malloc(sizeof(*trashDirectory) * 7);
 	strcpy(trashDirectory, "trash");
@@ -284,39 +313,11 @@ char *trashDirectory =
 		if(error) break;
 
 		//check object type
-		type = checkType(argv[i]);
+		int type = checkType(argv[i]);
 
-		if(type) { //file
-			//move file from current location
-			//to new location in trash
-			if(rename(argv[i], targetPath)){
-				error = deleteFileError;
-				break;
-			}
-
-		} else { //directory
-			//make directory in .trash
-			if(mkdir(targetPath, 0755) == -1){
-				error = makeDirectoryError;
-				free(targetPath);
-				break;
-			}
-
-			//if the directory given is empty
-			//remove it, and continue on
-			//otherwise, move the contents in the directory
-			//to the new path, and then delete those
-			if(emptyDirectory(argv[i])) {
-				if(rmdir(argv[i]) == -1){
-					error = removeDirError;
-					break;
-				}
-
-			} else{
-				moveDirContents(argv[i], targetPath);
-				rmdir(argv[i]);
-			}
-		}
+		move_file(type, argv[i], targetPath);
+		if(error) break;
+		
 		free(targetPath);
 	}
 
