@@ -14,15 +14,16 @@ char error = 0;
 //extracts file name from the absolute path given in file
 char *separateString(char *input, char delimiter) {
 	int length = strlen(input);
-	int length2 = length;
+	char *out = input + length - 1;
 
-	//empty for
-	for(; (length2 > 0) && (input[length2] != delimiter); --length2);
+	while((length > 0) && (*out == delimiter)) {
+		--out;
+		--length;
+	}
 
-	if(length != length2)
-		input += length2;
+	for(; (length > 1) && (*out != delimiter); --out, --length);
 
-	return input;
+	return out;
 }
 
 
@@ -35,11 +36,12 @@ char *concatDirectory(char *str1, char *str2) {
 
 	if(!out){
 		error = mallocError;
-	} else {
-		strcpy(out, str1);
-		strcat(out, "/");
-		strcat(out, str2);
+		return out;
 	}
+
+	strcpy(out, str1);
+	strcat(out, "/");
+	strcat(out, str2);
 	
 	return out;
 }
@@ -81,7 +83,7 @@ int8_t emptyDirectory(char *directory) {
 
 
 //rm's everything in directory
-int8_t rmDirContents(char *directory) {
+void rmDirContents(char *directory) {
 	struct dirent *d;
 	DIR *dir = opendir(directory);
 
@@ -102,7 +104,6 @@ int8_t rmDirContents(char *directory) {
 	}
 
 	closedir(dir);
-	return error;
 }
 
 
@@ -118,7 +119,7 @@ int8_t moveDirContents(char *directory, char *target) {
 
 		if(access(directory, F_OK) == -1) {
 			error = directoryExist;
-			//} else if( (*(d->d_name) != '.') && (*(d->d_name + 1) != '.') ) {
+
 		} else if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
 			int8_t emptyDir = emptyDirectory(directory);
 			if(emptyDir == -1){
@@ -194,26 +195,29 @@ char *getHome(void){
 //check that a given file exists
 //used to check if duplicates are in .trash
 //returns the new string
-char *checkExistence(char *input){
-	int size = strlen(input) + 1;
+void checkExistence(char **input){
+	int size = strlen(*input) + 1;
 
-	if(access(input, F_OK) != -1){
-		input = realloc(input, (size+1) * sizeof(*input));
+	if(access(*input, F_OK) == -1)
+		return;
 
-		if(!input){
-			error = mallocError;
-			return NULL;
-		}
-
-		strcat(input, "_");
-		//also checks if the renamed file
-		//exists in trash
-		input = checkExistence(input);
-
-		if(!input) return NULL;
+	char *out = malloc((size + 1) * sizeof(*out));
+	if(!out) {
+		error = mallocError;
+		return;
 	}
+	strcpy(out, *input);
+	strcat(out, "_");
+	free(*input);
 
-	return input;
+	//also checks if the renamed file
+	//exists in trash
+	checkExistence(&out);
+
+	if(!input)
+		return;
+
+	*input = out;
 }
 
 
@@ -249,14 +253,11 @@ void move_file(int type, char *src, char *dest) {
 		//remove it, and continue on
 		//otherwise, move the contents in the directory
 		//to the new path, and then delete those
-		if(emptyDirectory(src)) {
-			if(rmdir(src) == -1)
-				error = removeDirError;
-
-		} else {
+		if(!emptyDirectory(src))
 			moveDirContents(src, dest);
-			rmdir(src);
-		}
+
+		if(rmdir(src) == -1)
+			error = removeDirError;
 	}
 
 }
@@ -272,7 +273,7 @@ int main(int argc, char **argv) {
 
 	char *trashDirectory =
 #if DEBUG
-	malloc(sizeof(*trashDirectory) * 7);
+	malloc(7 * sizeof(*trashDirectory));
 	strcpy(trashDirectory, "trash");
 #else
 	//hardcoded directory for trash is ~/.trash
@@ -301,7 +302,6 @@ int main(int argc, char **argv) {
 
 		//fileName: the name of just the file that is going to be deleted
 		char *fileName = separateString(argv[i], '/');
-		if(error) break;
 
 		//targetPath: the path to the file in the trash directory
 		char *targetPath = concatDirectory(trashDirectory, fileName);
@@ -309,7 +309,7 @@ int main(int argc, char **argv) {
   
 		//check if file exists in .trash
 		//if it does, change the name
-		targetPath = checkExistence(targetPath);
+		checkExistence(&targetPath);
 		if(error) break;
 
 		//check object type
