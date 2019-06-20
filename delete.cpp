@@ -12,9 +12,10 @@ int main(int argc, char **argv) {
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
 		for(auto &di : std::filesystem::directory_iterator(trash_dir)) {
-			if(!std::filesystem::remove(di))
+			if(!std::filesystem::remove_all(di))
 				std::cout << "Error removing: " << di << "\n";
 		}
+
 		return 0;
 	}
 
@@ -30,12 +31,11 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		std::filesystem::path target = trash_dir / file;
+
+		std::filesystem::path target = trash_dir / file.filename();
 
 		while(std::filesystem::exists(target)) {
-			std::filesystem::path tmp = "_";
-			tmp += target;
-			target = tmp;
+			target += "_";
 		}
 
 		std::filesystem::rename(cwd / file, target);

@@ -1,3 +1,3 @@
 #pragma once
 
-const std::filesystem::path trash_dir = "/home/royce/.trash/";
+const std::filesystem::path trash_dir = "trash/";
