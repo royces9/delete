@@ -135,13 +135,13 @@ int main(int argc, char **argv) {
 	//directory for home
 	char *homeDirectory = getHome();
 	if(error) goto errorGoTo;
-
+	char *trashDirectory =
 	#if DEBUG
-	char *trashDirectory = malloc(sizeof(*trashDirectory) * 9);
+	malloc(sizeof(*trashDirectory) * 9);
 	strcpy(trashDirectory, "trash/");
 	#else
 	//hardcoded directory for trash is ~/.trash
-	char *trashDirectory = concatDirectory(homeDirectory, ".trash/");
+	concatDirectory(homeDirectory, ".trash/");
 	if(error) goto errorGoTo;
 	#endif
 

@@ -8,3 +8,7 @@ exp: exp.c exp.h
 
 usr: delete.c delete.h
 	gcc -o /usr/local/bin/del delete.c
+
+
+dcpp: delete.cpp config.hpp
+	g++ -std=c++17 -DDEBUG -Wall -o dcpp delete.cpp -lstdc++fs

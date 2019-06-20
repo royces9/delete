@@ -1,18 +1,19 @@
 #include <dirent.h>
 #include <fcntl.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "config.h"
+
 #include "delete.h"
 
 char error = 0;
 
 //extracts file name from the absolute path given in file
-char *separateString(char *input, char delimiter) {
+char *get_file_name(char *input, char delimiter) {
 	int length = strlen(input);
 	char *out = input + length - 1;
 
@@ -29,8 +30,8 @@ char *separateString(char *input, char delimiter) {
 
 //given two strings, concatenate them and separate them by a '/'
 //two strings are generally directories/files
-char *concatDirectory(char *str1, char *str2) {
-	int size = strlen(str1) + strlen(str2) + 2;
+char *concat_dir(char const *const aa, int a_len ,char const *const bb, int b_len) {
+	int size = a_len + b_len + 2;
 
 	char *out = malloc(size * sizeof(*out));
 
@@ -39,9 +40,9 @@ char *concatDirectory(char *str1, char *str2) {
 		return out;
 	}
 
-	strcpy(out, str1);
+	strcpy(out, aa);
 	strcat(out, "/");
-	strcat(out, str2);
+	strcat(out, bb);
 	
 	return out;
 }
@@ -83,13 +84,15 @@ int8_t emptyDirectory(char *directory) {
 
 
 //rm's everything in directory
-void rmDirContents(char *directory) {
+void rmDirContents(char const *const directory) {
 	struct dirent *d;
 	DIR *dir = opendir(directory);
+	int dir_len = strlen(directory);
 
 	while( (!error) && ((d = readdir(dir)) != NULL)) {
 		if((strcmp(d->d_name, ".") && strcmp(d->d_name, ".."))) {
-			char *filePath = concatDirectory(directory, d->d_name);
+			int d_name_len = strlen(d->d_name);
+			char *filePath = concat_dir(directory, dir_len, d->d_name, d_name_len);
 
 			if(checkType(filePath)) {
 				if(unlink(filePath) == -1)
@@ -114,6 +117,8 @@ int8_t moveDirContents(char *directory, char *target) {
 
 	DIR *dir = opendir(directory);
 
+	int dir_len = strlen(directory);
+	int target_len = strlen(target);
 	//for every object in the directory
 	while( (!error) && (d = readdir(dir)) ) {
 
@@ -130,11 +135,11 @@ int8_t moveDirContents(char *directory, char *target) {
 				rmdir(directory);
 
 			} else {
-
-				char *filePath = concatDirectory(directory, d->d_name);
+				int d_name_len = strlen(d->d_name);
+				char *filePath = concat_dir(directory, dir_len, d->d_name, d_name_len);
 				type = checkType(filePath);
 	  
-				char *target2 = concatDirectory(target, d->d_name);
+				char *target2 = concat_dir(target, target_len, d->d_name, d_name_len);
 
 				//check if the object is a file or directory
 				if(type) { //file, move the file from filePath to target2
@@ -267,27 +272,9 @@ int main(int argc, char **argv) {
 	if(argc == 1)
 		return 0;
 
-	//directory for home
-	char *homeDirectory = getHome();
-	if(error) goto errorGoTo;
-
-	char *trashDirectory =
-#if DEBUG
-	malloc(7 * sizeof(*trashDirectory));
-	strcpy(trashDirectory, "trash");
-#else
-	//hardcoded directory for trash is ~/.trash
-	concatDirectory(homeDirectory, ".trash");
-	if(error) goto errorGoTo;
-#endif
-
-
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
-		rmDirContents(trashDirectory);
-
-		free(trashDirectory);
-		free(homeDirectory);
+		rmDirContents(trash_path);
 		return 0;
 	}
 
@@ -301,10 +288,10 @@ int main(int argc, char **argv) {
 		}
 
 		//fileName: the name of just the file that is going to be deleted
-		char *fileName = separateString(argv[i], '/');
+		char *fileName = get_file_name(argv[i], '/');
 
 		//targetPath: the path to the file in the trash directory
-		char *targetPath = concatDirectory(trashDirectory, fileName);
+		char *targetPath = concat_dir(trash_path, strlen(trash_path), fileName, strlen(fileName));
 		if(error) break;
   
 		//check if file exists in .trash
@@ -321,7 +308,6 @@ int main(int argc, char **argv) {
 		free(targetPath);
 	}
 
- errorGoTo:
 	error_handling();
 	return 0;
 
