@@ -1,0 +1,38 @@
+#!/usr/bin/python
+
+import os
+import sys
+import shutil
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        sys.exit(1);
+
+    trash_dir = "trash/";
+
+    if sys.argv[1] == "-empty":
+        for entry in os.listdir(trash_dir):
+            entry = os.path.join(trash_dir, entry);
+            if os.path.isdir(entry):
+                shutil.rmtree(entry);
+            else:
+                os.remove(entry);
+
+        sys.exit(1);
+
+    args = iter(sys.argv);
+    next(args);
+    for arg in args:
+        if not os.path.exists(arg):
+            print(arg, "does not exist.");
+            continue;
+        
+        (_, filename) = os.path.split(arg);
+        
+        targ = os.path.join(trash_dir, filename);
+
+        while(os.path.exists(targ)):
+            (head, tail) = os.path.split(targ);
+            targ = os.path.join(head, tail + "_");
+
+        os.rename(arg, targ);
