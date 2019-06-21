@@ -34,10 +34,8 @@ char *concat_dir(char const *const aa, int a_len ,char const *const bb, int b_le
 
 	char *out = malloc(size * sizeof(*out));
 
-	if(!out){
-		error = mallocError;
+	if(!out)
 		return out;
-	}
 
 	strcpy(out, aa);
 	strcat(out, "/");
@@ -87,15 +85,13 @@ void rmDirContents(char const *const directory) {
 //check that a given file exists
 //used to check if duplicates are in .trash
 //returns the new string
-void checkExistence(char **input){
+int checkExistence(char **input){
 	int len = strlen(*input);
 
 	while(access(*input, F_OK) != -1) {
 		char *out = malloc((len + 2) * sizeof(*out));
-		if(!out) {
-			error = mallocError;
-			return;
-		}
+		if(!out)
+			return 1;
 
 		strcpy(out, *input);
 		out[len + 1] = 0;
@@ -112,20 +108,8 @@ void checkExistence(char **input){
 
 		++len;
 	}
-}
 
-
-void error_handling(void) {
-	if(error < 0) {
-		puts("Error:");
-		switch(error) {
-		case -1: puts("Could not delete file."); break;
-		case -2: puts("Could not rename file."); break;
-		case -3: puts("Directory does not exist."); break;
-		case -4: puts("File does not exist."); break;
-		case -5: puts("Malloc failure."); break;
-		}
-	}
+	return 0;
 }
 
 
@@ -150,15 +134,14 @@ int main(int argc, char **argv) {
 
 		//fileName: the name of just the file that is going to be deleted
 		char *fileName = get_file_name(argv[i], '/');
-
 		//targetPath: the path to the file in the trash directory
 		char *targetPath = concat_dir(trash_path, strlen(trash_path), fileName, strlen(fileName));
-		if(error) break;
+		if(!targetPath) break;
   
 		//check if file exists in .trash
 		//if it does, change the name
-		checkExistence(&targetPath);
-		if(error) break;
+		if(checkExistence(&targetPath))
+			break;
 
 		//move file to trash
 		if(rename(argv[i], targetPath))
@@ -167,7 +150,6 @@ int main(int argc, char **argv) {
 		free(targetPath);
 	}
 
-	error_handling();
 	return 0;
 
 }

@@ -15,3 +15,6 @@ dcpp: delete.cpp config.hpp
 
 drs: delete.rs
 	rustc delete.rs -o drs
+
+ers: exp.rs
+	rustc exp.rs -o ers

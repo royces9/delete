@@ -4,9 +4,6 @@ use std::path;
 use std::string;
 use std::vec;
 
-fn is_exists(aa: &string::String) -> bool{
-    path::Path::new(aa).exists()
-}
 
 fn main() -> std::io::Result<()>{
     let args : vec::Vec<string::String> = env::args().collect();
@@ -25,6 +22,7 @@ fn main() -> std::io::Result<()>{
                 fs::remove_file(path)?;
             }
         }
+
         return Ok(());
     }
 
@@ -36,27 +34,19 @@ fn main() -> std::io::Result<()>{
             continue;
         }
         
-        let mut target;
-        if let Some(tt) = trash_dir.to_str() {
-            target = tt.to_string();
+        let mut target = trash_dir.as_os_str().to_os_string();
+        if let Some(file) = src.file_name() {
+            target.push("/");
+            target.push(file);
         } else {
             return Ok(());
         }
 
-        if let Some(file) = src.file_name() {
-            if let Some(name) = file.to_str() {
-                target.push('/');
-                target.push_str(name);
-            }
+        while path::Path::new(&target).exists() {
+            target.push("_");
         }
-
-        while is_exists(&target) {
-            target.push('_');
-        }
-
-        let target_path = path::Path::new(&target);
-
-        fs::rename(arg, target_path)?;
+        
+        fs::rename(arg, &target)?;
     }
 
     Ok(())
