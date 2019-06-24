@@ -5,9 +5,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "config.h"
-
 #include "delete.h"
+
+char const *const trash_path = "/home/royce/Documents/program/delete/trash/";
 
 char error = 0;
 
@@ -89,7 +89,7 @@ int checkExistence(char **input){
 	int len = strlen(*input);
 
 	while(access(*input, F_OK) != -1) {
-		char *out = malloc((len + 2) * sizeof(*out));
+		char *out = realloc(*input, (len + 2) * sizeof(*out));
 		if(!out)
 			return 1;
 
@@ -136,7 +136,8 @@ int main(int argc, char **argv) {
 		char *fileName = get_file_name(argv[i], '/');
 		//targetPath: the path to the file in the trash directory
 		char *targetPath = concat_dir(trash_path, strlen(trash_path), fileName, strlen(fileName));
-		if(!targetPath) break;
+		if(!targetPath)
+			break;
   
 		//check if file exists in .trash
 		//if it does, change the name

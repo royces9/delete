@@ -8,7 +8,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit(1);
 
-    trash_dir = "trash/";
+    trash_dir = "/home/royce/Documents/program/delete/trash/";
 
     if sys.argv[1] == "-empty":
         for entry in os.listdir(trash_dir):

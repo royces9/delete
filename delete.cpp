@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "config.hpp"
+static const std::filesystem::path trash_dir = "/home/royce/Documents/program/delete/trash/";
 
 namespace fs = std::filesystem;
 
@@ -13,10 +13,9 @@ int main(int argc, char **argv) {
 
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
-		for(auto &di : fs::directory_iterator(trash_dir)) {
+		for(auto &di : fs::directory_iterator(trash_dir))
 			if(!fs::remove_all(di))
 				std::cout << "Error removing: " << di << "\n";
-		}
 
 		return 0;
 	}
@@ -30,17 +29,14 @@ int main(int argc, char **argv) {
 
 		if(!fs::exists(file)) {
 			std::cout << file << " does not exist.\n";
-			continue;
+		} else {
+			fs::path target = trash_dir / file.filename();
+
+			while(fs::exists(target))
+				target += "_";
+
+			fs::rename(cwd / file, target);
 		}
-
-
-		fs::path target = trash_dir / file.filename();
-
-		while(fs::exists(target)) {
-			target += "_";
-		}
-
-		fs::rename(cwd / file, target);
 	}
 
 	return 0;

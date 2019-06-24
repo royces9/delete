@@ -11,7 +11,7 @@ fn main() -> std::io::Result<()>{
         return Ok(());
     }
 
-    let trash_dir = path::Path::new("trash/");
+    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash/");
 
     if args[1] == "-empty" {
         for entry in fs::read_dir(&trash_dir)? {
@@ -33,7 +33,8 @@ fn main() -> std::io::Result<()>{
             println!("{} does not exist.", src.display());
             continue;
         }
-        
+
+
         let mut target = trash_dir.as_os_str().to_os_string();
         if let Some(file) = src.file_name() {
             target.push("/");
@@ -46,7 +47,7 @@ fn main() -> std::io::Result<()>{
             target.push("_");
         }
         
-        fs::rename(arg, &target)?;
+        fs::rename(src, &target)?;
     }
 
     Ok(())
