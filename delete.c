@@ -12,7 +12,7 @@ char const *const trash_path = "/home/royce/Documents/program/delete/trash/";
 char error = 0;
 
 //extracts file name from the absolute path given in file
-char *get_file_name(char *input, char delimiter) {
+char *get_file_name(char *input, char delimiter, int *len_out) {
 	int length = strlen(input);
 	char *out = input + length - 1;
 
@@ -21,7 +21,7 @@ char *get_file_name(char *input, char delimiter) {
 		--length;
 	}
 
-	for(; (length > 1) && (*out != delimiter); --out, --length);
+	for(; (length > 1) && (*out != delimiter); --out, --length, ++(*len_out));
 
 	return out;
 }
@@ -93,6 +93,20 @@ int checkExistence(char **input){
 		if(!out)
 			return 1;
 
+		out[len + 1] = 0;
+		int i = len - 1;
+		for(; out[i] == '/'; --i)
+			out[i] = 0;
+
+		out[i + 1] = '_';
+		*input = out;
+		++len;
+
+		/*
+		char *out = malloc((len + 2) * sizeof(*out));
+		if(!out)
+			return 1;
+
 		strcpy(out, *input);
 		out[len + 1] = 0;
 		out[len] = 0;
@@ -107,6 +121,7 @@ int checkExistence(char **input){
 		*input = out;
 
 		++len;
+		*/
 	}
 
 	return 0;
@@ -123,6 +138,8 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
+	int trash_len = strlen(trash_path);
+
 	//loop through all given arguments
 	//should be names of files/directories
 	for(int i = 1; argv[i] && !error; i++) {
@@ -133,9 +150,10 @@ int main(int argc, char **argv) {
 		}
 
 		//fileName: the name of just the file that is going to be deleted
-		char *fileName = get_file_name(argv[i], '/');
+		int file_len = 0;
+		char *fileName = get_file_name(argv[i], '/', &file_len);
 		//targetPath: the path to the file in the trash directory
-		char *targetPath = concat_dir(trash_path, strlen(trash_path), fileName, strlen(fileName));
+		char *targetPath = concat_dir(trash_path, trash_len, fileName, file_len);
 		if(!targetPath)
 			break;
   

@@ -34,7 +34,6 @@ fn main() -> std::io::Result<()>{
             continue;
         }
 
-
         let mut target = trash_dir.as_os_str().to_os_string();
         if let Some(file) = src.file_name() {
             target.push("/");
