@@ -3,9 +3,8 @@
 #include <iostream>
 #include <string>
 
-static const std::filesystem::path trash_dir = "/home/royce/Documents/program/delete/trash/";
-
 namespace fs = std::filesystem;
+static const fs::path trash_dir = "/home/royce/Documents/program/delete/trash/";
 
 int main(int argc, char **argv) {
 	if(argc == 1)
@@ -20,7 +19,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	fs::path cwd = fs::current_path();
+	auto cwd = fs::current_path();
 
 	//loop through all given arguments
 	//should be names of files/directories
@@ -29,14 +28,15 @@ int main(int argc, char **argv) {
 
 		if(!fs::exists(file)) {
 			std::cout << file << " does not exist.\n";
-		} else {
-			fs::path target = trash_dir / file.filename();
-
-			while(fs::exists(target))
-				target += "_";
-
-			fs::rename(cwd / file, target);
+			continue;
 		}
+
+		auto target = trash_dir / file.filename();
+		
+		while(fs::exists(target))
+			target += "_";
+
+		fs::rename(cwd / file, target);
 	}
 
 	return 0;

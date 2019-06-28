@@ -39,7 +39,7 @@ fn main() -> std::io::Result<()>{
         if let Some(file) = src.file_name() {
             target.push(file);
         } else {
-            println!("Print::file_name() returned None");
+            println!("Invalid path: {}", src.display());
             return Ok(());
         }
 

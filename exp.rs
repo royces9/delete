@@ -14,13 +14,15 @@ fn move_file(path: string::String, trash: &path::Path) -> io::Result<()> {
 
     let mut target = trash.as_os_str().to_os_string();
     if let Some(file) = src.file_name() {
-        target.push("/");
         target.push(file);
+
         while path::Path::new(&target).exists() {
             target.push("_");
         }
 
         fs::rename(&path, &target)?;
+    } else {
+        println!("Invalid path: {}", src.display());
     }
 
     Ok(())
@@ -30,7 +32,8 @@ fn move_file(path: string::String, trash: &path::Path) -> io::Result<()> {
 fn main() -> io::Result<()>{
     let mut args = env::args();
 
-    let trash_dir = path::Path::new("trash/");
+    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash/");
+
     if let Some(arg) = args.nth(1) {
         if arg == "-empty" {
             for entry in fs::read_dir(&trash_dir)? {
