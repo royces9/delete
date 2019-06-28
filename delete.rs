@@ -11,8 +11,9 @@ fn main() -> std::io::Result<()>{
         return Ok(());
     }
 
-    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash/");
-
+    //trash dir must end in a / (or \?)
+    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash");
+    
     if args[1] == "-empty" {
         for entry in fs::read_dir(&trash_dir)? {
             let path = entry?.path();
@@ -36,9 +37,9 @@ fn main() -> std::io::Result<()>{
 
         let mut target = trash_dir.as_os_str().to_os_string();
         if let Some(file) = src.file_name() {
-            target.push("/");
             target.push(file);
         } else {
+            println!("Print::file_name() returned None");
             return Ok(());
         }
 

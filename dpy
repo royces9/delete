@@ -11,12 +11,14 @@ if __name__ == "__main__":
     trash_dir = "/home/royce/Documents/program/delete/trash/";
 
     if sys.argv[1] == "-empty":
-        for entry in os.listdir(trash_dir):
-            entry = os.path.join(trash_dir, entry);
-            if os.path.isdir(entry):
-                shutil.rmtree(entry);
-            else:
+        for root, subdirs, files in os.walk(trash_dir, topdown = False):
+            for ff in files:
+                entry = os.path.join(root, ff);
                 os.remove(entry);
+
+            for subdir in subdirs:
+                entry = os.path.join(root, subdir);
+                os.rmdir(entry);
 
         sys.exit(1);
 
