@@ -12,7 +12,7 @@ CFLAGS = -Wall
 debug: CFLAGS += -g -DTRASH_PATH=$(TEST_PATH)
 debug: all
 
-release: CFLAGS += -DTRASH_PATH=$(REL_PATH)
+release: CFLAGS += -DTRASH_PATH=$(REL_PATH) -O2
 release: all
 
 all: delete exp dcpp drs ers
