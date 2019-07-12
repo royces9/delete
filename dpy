@@ -8,8 +8,9 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit(1);
 
-    trash_dir = "/home/royce/Documents/program/delete/trash/";
-
+    #trash_dir = "/home/royce/Documents/program/delete/trash/";
+    trash_dir = "./trash/";
+    
     if sys.argv[1] == "-empty":
         for root, subdirs, files in os.walk(trash_dir, topdown = False):
             for ff in files:
@@ -29,7 +30,7 @@ if __name__ == "__main__":
             print(arg, "does not exist.");
             continue;
         
-        (_, filename) = os.path.split(arg);
+        filename = os.path.basename(arg);
         
         targ = os.path.join(trash_dir, filename);
 

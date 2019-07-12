@@ -4,7 +4,7 @@
 #include <string>
 
 namespace fs = std::filesystem;
-static const fs::path trash_dir = "/home/royce/Documents/program/delete/trash/";
+static const fs::path trash_dir = TRASH_PATH;
 
 int main(int argc, char **argv) {
 	if(argc == 1)
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	//loop through all given arguments
 	//should be names of files/directories
-	for(int i = 1; argv[i]; i++) {
+	for(int i = 1; argv[i]; ++i) {
 		fs::path file = argv[i];
 
 		if(!fs::exists(file)) {

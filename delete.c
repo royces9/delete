@@ -7,7 +7,7 @@
 
 #include "delete.h"
 
-char const *const trash_path = "/home/royce/Documents/program/delete/trash/";
+char const *const trash_path = TRASH_PATH;
 
 char error = 0;
 
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
 	//loop through all given arguments
 	//should be names of files/directories
-	for(int i = 1; argv[i] && !error; i++) {
+	for(int i = 1; argv[i] && !error; ++i) {
 
 		if(access(argv[i], F_OK) == -1) {
 			printf("%s does not exist.\n", argv[i]);

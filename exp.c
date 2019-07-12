@@ -69,7 +69,7 @@ char *concatDirectory(char *str1, char *str2) {
 
 	char *out = malloc(size * sizeof(*out));
 
-	if(!out){
+	if(!out) {
 		error = malloc_err;
 	} else {
 		strcpy(out, str1);
@@ -99,58 +99,18 @@ char *checkExistence(char *input){
 }
 
 
-
-char *getHome(void){
-	//if sudo is used, check the user calling sudo
-	char *user = getenv("SUDO_USER");
-
-	//directory for home
-	char *homeDirectory = NULL;
-
-	//NULL if sudo was NOT used, just get home variable
-	if(!user) {
-		user = getenv("HOME");
-		if( !(homeDirectory = malloc((strlen(user) + 1) * sizeof(*homeDirectory))) ) {
-			error = malloc_err;
-		} else {
-			strcpy(homeDirectory, user);
-		}
-	} else {
-		if( !(homeDirectory = malloc((strlen(user) + 7) * sizeof(*homeDirectory))) ) {
-			error = malloc_err;
-		} else {
-			strcpy(homeDirectory, "/home/");
-			strcat(homeDirectory, user);
-		}
-	}
-
-	return homeDirectory;
-}
-
-
 int main(int argc, char **argv) {
 	if(argc == 1)
 		return 0;
 
 	//directory for home
-	char *homeDirectory = getHome();
-	if(error) goto errorGoTo;
-	char *trashDirectory =
-	#if DEBUG
-	malloc(sizeof(*trashDirectory) * 9);
-	strcpy(trashDirectory, "trash/");
-	#else
-	//hardcoded directory for trash is ~/.trash
-	concatDirectory(homeDirectory, ".trash/");
-	if(error) goto errorGoTo;
-	#endif
-
+	char *trashDirectory = TRASH_PATH;
 	int pid = 0;
 
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
 		clear_trash(trashDirectory);
-		goto errorGoTo;
+		return 0;
 	}
 
 	//loop through all given arguments
@@ -184,12 +144,7 @@ int main(int argc, char **argv) {
 		free(targetPath);
 	}
 
- errorGoTo:
 	error_handling();
-
-	free(trashDirectory);
-	free(homeDirectory);
-
 	return 0;
 
 }

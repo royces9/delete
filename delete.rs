@@ -12,8 +12,8 @@ fn main() -> std::io::Result<()>{
     }
 
     //trash dir must end in a / (or \?)
-    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash");
-    
+    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash/");    
+
     if args[1] == "-empty" {
         for entry in fs::read_dir(&trash_dir)? {
             let path = entry?.path();
