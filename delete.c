@@ -14,14 +14,18 @@ char error = 0;
 //extracts file name from the absolute path given in file
 char *get_file_name(char *input, char delimiter, int *len_out) {
 	int length = strlen(input);
-	char *out = input + length - 1;
+	char *out = &input[length - 1];
 
 	while((length > 0) && (*out == delimiter)) {
 		--out;
 		--length;
 	}
 
-	for(; (length > 1) && (*out != delimiter); --out, --length, ++(*len_out));
+	while((length > 1) && (*out != delimiter)) {
+		--out;
+		--length;
+		++(*len_out);
+	}
 
 	return out;
 }
@@ -138,7 +142,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	int trash_len = strlen(trash_path);
+	int const trash_len = strlen(trash_path);
 
 	//loop through all given arguments
 	//should be names of files/directories

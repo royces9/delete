@@ -6,20 +6,17 @@ import shutil
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        sys.exit(1);
+        sys.exit(1)
 
-    #trash_dir = "/home/royce/Documents/program/delete/trash/";
-    trash_dir = "./trash/";
+    trash_dir = "/home/royce/Documents/program/delete/trash/"
     
     if sys.argv[1] == "-empty":
         for root, subdirs, files in os.walk(trash_dir, topdown = False):
             for ff in files:
-                entry = os.path.join(root, ff);
-                os.remove(entry);
+                os.remove(os.path.join(root, ff))
 
             for subdir in subdirs:
-                entry = os.path.join(root, subdir);
-                os.rmdir(entry);
+                os.rmdir(os.path.join(root, subdir))
 
         sys.exit(1);
 
@@ -27,15 +24,15 @@ if __name__ == "__main__":
     next(args);
     for arg in args:
         if not os.path.exists(arg):
-            print(arg, "does not exist.");
-            continue;
+            print(arg, "does not exist.")
+            continue
         
-        filename = os.path.basename(arg);
+        filename = os.path.basename(arg)
         
-        targ = os.path.join(trash_dir, filename);
+        targ = os.path.join(trash_dir, filename)
 
-        while(os.path.exists(targ)):
-            (head, tail) = os.path.split(targ);
-            targ = os.path.join(head, tail + "_");
+        while os.path.exists(targ):
+            (head, tail) = os.path.split(targ)
+            targ = os.path.join(head, tail + "_")
 
-        os.rename(arg, targ);
+        os.rename(arg, targ)

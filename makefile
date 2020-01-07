@@ -1,7 +1,7 @@
 CC = gcc
 
-TEST_PATH := "\"/home/royce/Documents/program/delete/trash/\""
-REL_PATH := "\"/home/royce/.trash/\""
+TEST_PATH := "\"${PWD}/trash/\""
+REL_PATH := "\"${HOME}/.trash/\""
 
 CFLAGS = -Wall
 
