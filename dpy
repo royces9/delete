@@ -18,7 +18,7 @@ if __name__ == "__main__":
             for subdir in subdirs:
                 os.rmdir(os.path.join(root, subdir))
 
-        sys.exit(1);
+        sys.exit(1)
 
     args = iter(sys.argv)
     next(args)
