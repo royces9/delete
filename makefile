@@ -17,7 +17,7 @@ release: all
 
 all: delete exp dcpp drs ers
 
-delete: delete.c delete.h
+delete: delete.c
 	gcc $(CFLAGS) delete.c -o $@ 
 
 exp: exp.c exp.h

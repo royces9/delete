@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
         sys.exit(1);
 
-    args = iter(sys.argv);
-    next(args);
+    args = iter(sys.argv)
+    next(args)
     for arg in args:
         if not os.path.exists(arg):
             print(arg, "does not exist.")
