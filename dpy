@@ -8,7 +8,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit(1)
 
-    trash_dir = "/home/royce/Documents/program/delete/trash/"
+    
+    trash_dir = os.path.expanduser("~/Documents/program/delete/trash/")
     
     if sys.argv[1] == "-empty":
         for root, subdirs, files in os.walk(trash_dir, topdown = False):
