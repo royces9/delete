@@ -32,7 +32,7 @@ fn move_file(path: string::String, trash: &path::Path) -> io::Result<()> {
 fn main() -> io::Result<()>{
     let mut args = env::args();
 
-    let trash_dir = path::Path::new("/home/royce/Documents/program/delete/trash/");
+    let trash_dir = std::fs::canonicalize("~/Documents/program/delete/trash/")?;
 
     if let Some(arg) = args.nth(1) {
         if arg == "-empty" {
@@ -47,11 +47,11 @@ fn main() -> io::Result<()>{
             return Ok(());
         }
 
-        move_file(arg, trash_dir)?;
+        move_file(arg, &trash_dir)?;
     }
 
     for arg in args {
-        move_file(arg, trash_dir)?;
+        move_file(arg, &trash_dir)?;
     }
 
     Ok(())

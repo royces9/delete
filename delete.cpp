@@ -4,11 +4,13 @@
 #include <string>
 
 namespace fs = std::filesystem;
-static const fs::path trash_dir = TRASH_PATH;
+
 
 int main(int argc, char **argv) {
 	if(argc == 1)
 		return 0;
+
+	const fs::path trash_dir = TRASH_PATH;
 
 	//if there is an argument to empty trash
 	if(!strcmp("-empty", argv[1])) {
